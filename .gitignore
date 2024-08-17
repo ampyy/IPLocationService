@@ -1,12 +1,28 @@
-# Ignore bin and obj directories
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
 bin/
 obj/
 
-# Ignore all .dll files
-*.dll
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
 
-# Ignore all .exe files (optional, if you have any executable files)
-*.exe
+# ASP.NET Core
+wwwroot/
 
-# Ignore Visual Studio temporary files
-*.vs
+# Rider
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
