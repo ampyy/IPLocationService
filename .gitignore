@@ -1,0 +1,12 @@
+# Ignore bin and obj directories
+bin/
+obj/
+
+# Ignore all .dll files
+*.dll
+
+# Ignore all .exe files (optional, if you have any executable files)
+*.exe
+
+# Ignore Visual Studio temporary files
+*.vs
