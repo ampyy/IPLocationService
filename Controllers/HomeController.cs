@@ -4,6 +4,7 @@ using IPLocationService.Models;
 using Location.Models;
 using Location.Interfaces.Services;
 using Location.Utilities;
+using System.Net;
 
 namespace IPLocationService.Controllers;
 
@@ -59,7 +60,7 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while retrieving location information.");
-            return StatusCode(500, "An error occurred while processing your request.");
+            return StatusCode((int)HttpStatusCode.InternalServerError, "An error occurred while processing your request.");
         }
     }
 
