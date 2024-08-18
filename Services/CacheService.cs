@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
-using Location.Interfaces.Service.ICache;
+using Location.Interfaces.Services;
 
 namespace Location.Services.Cache
 {
@@ -16,7 +16,7 @@ namespace Location.Services.Cache
             _logger = logger;
         }
 
-        public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan expiration) where T : class
+        public async Task<T> GetFromCacheAsync<T>(string key, Func<Task<T>> factory, TimeSpan expiration) where T : class
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -54,6 +54,34 @@ namespace Location.Services.Cache
                 _locks.TryRemove(key, out _);
             }
         }
+
+        public async Task<bool> StoreToCacheAsync<T>(string key, T value, TimeSpan expiration) where T : class
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException("Key cannot be null or empty.", nameof(key));
+            }
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            try
+            {
+                _cache.Set(key, value, new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = expiration
+                });
+
+                return await Task.FromResult(true); // Indicate success
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An error occurred while storing cache entry for key '{key}': {ex.Message}", ex);
+                return await Task.FromResult(false); // Indicate failure
+            }
+        }
+
     }
 
 }
