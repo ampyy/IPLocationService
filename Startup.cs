@@ -14,9 +14,6 @@ namespace LocationService
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-#if RELEASE
-                .AddJsonFile($"appsettings.Release.json", optional : true)
-#endif
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
         }
