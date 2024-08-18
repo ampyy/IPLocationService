@@ -11,7 +11,7 @@ namespace Location.Services.LocationLogic
         private readonly List<Provider> _providers;
         private readonly ConcurrentDictionary<string, ProviderQualityMetrics> _providerMetrics;
         private readonly ICacheService _cache;
-        private const int RequestThreshold = 3;
+        private const int RequestThreshold = 45;
         public ProviderSelectorLogic(ICacheService cache)
         {
             _cache = cache;
@@ -28,12 +28,23 @@ namespace Location.Services.LocationLogic
         public async Task<Provider> GetBestProviderAsync(string? excludeProviderName = null)
         {
             var now = DateTime.Now;
+            // Check if any provider has reached the request threshold if yes reset all this helps balancing the load equally
+            var anyProviderReachedThreshold = _providerMetrics.Values.Any(p => p.RequestCount >= RequestThreshold);
+
             // Update metrics for each provider
             foreach (var provider in _providerMetrics.Values)
             {
                 // Reset metrics if more than 5 minutes have passed
                 // we are storing the error and response tome metrics for 5 minutes for best performances
                 if ((now - provider.LastResetTime).TotalMinutes >= 5)
+                {
+                    await ResetMetricsAsync(provider.ProviderName);
+                }
+            }
+            
+            if (anyProviderReachedThreshold)
+            {
+                foreach (var provider in _providerMetrics.Values)
                 {
                     await ResetMetricsAsync(provider.ProviderName);
                 }
@@ -54,7 +65,6 @@ namespace Location.Services.LocationLogic
             var bestProviderMetrics = query
                 .OrderBy(p => p.RequestCount)
                 .ThenBy(p => p.ErrorCount)
-                .ThenByDescending(p => p.ProviderScore) // Higher score is better
                 .ThenBy(p => p.AvgResponseTime)
                 .FirstOrDefault();
 
