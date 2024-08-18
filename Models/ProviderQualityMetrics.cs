@@ -10,10 +10,11 @@ namespace Location.Models
     public class ProviderQualityMetrics
     {
         public string ProviderName { get; set; }
-        public int RequestCount { get; set; } = 0;
-        public int ErrorCount { get; set; } = 0;
-        public double AvgResponseTime { get; set; } = 0;
+        public int RequestCount { get; set; }
+        public int ErrorCount { get; set; }
+        public double AvgResponseTime { get; set; }
         public DateTime LastResetTime { get; set; } = DateTime.Now;
         public List<double> ResponseTimes { get; set; } = new List<double>();
+        public int ProviderScore { get; set; }
     }
 }

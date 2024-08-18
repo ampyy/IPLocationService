@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 using Location.Interfaces.Services;
 using Location.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Location.Utilities
 {
@@ -37,7 +39,10 @@ namespace Location.Utilities
 
             if (minuteCount >= _requestsPerMinute)
             {
-                context.Result = new Microsoft.AspNetCore.Mvc.StatusCodeResult(429); // Too Many Requests
+                context.Result = new JsonResult(new { message = "Too many requests in a minute" })
+                {
+                    StatusCode = 429 // Too Many Requests
+                };
                 return;
             }
 
@@ -50,7 +55,10 @@ namespace Location.Utilities
 
             if (hourCount >= _requestsPerHour)
             {
-                context.Result = new Microsoft.AspNetCore.Mvc.StatusCodeResult(429); // Too Many Requests
+                context.Result = new JsonResult(new { message = "Too many requests in an hour" })
+                {
+                    StatusCode = 429 // Too Many Requests
+                };
                 return;
             }
 

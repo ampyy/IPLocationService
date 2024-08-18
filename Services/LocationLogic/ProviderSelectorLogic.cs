@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Location.Interfaces.Services;
 using Location.Models;
 using Location.Utilities;
@@ -10,7 +11,7 @@ namespace Location.Services.LocationLogic
         private readonly List<Provider> _providers;
         private readonly ConcurrentDictionary<string, ProviderQualityMetrics> _providerMetrics;
         private readonly ICacheService _cache;
-        private const int RequestThreshold = 45;
+        private const int RequestThreshold = 3;
         public ProviderSelectorLogic(ICacheService cache)
         {
             _cache = cache;
@@ -24,7 +25,7 @@ namespace Location.Services.LocationLogic
             );
         }
 
-        public async Task<Provider> GetBestProviderAsync()
+        public async Task<Provider> GetBestProviderAsync(string? excludeProviderName = null)
         {
             var now = DateTime.Now;
             // Update metrics for each provider
@@ -38,13 +39,33 @@ namespace Location.Services.LocationLogic
                 }
             }
 
-            // Select the best provider based on the criteria 
-            var bestProviderMetrics = _providerMetrics.Values
+            IEnumerable<ProviderQualityMetrics> query = _providerMetrics.Values;
+
+            // Perform the exclusion first if excludeProviderName is not null or whitespace
+            if (!string.IsNullOrWhiteSpace(excludeProviderName))
+            {
+                query = query.Where(p => p.ProviderName != excludeProviderName);
+            }
+
+            // the provider which got least request get the chance first
+            // as well as we also check the provider with least error
+            // then the best response time
+            // algo mix of round-robin & a little tweaked weighted connections so here we assume error and repsonse time as their weight capabilities to handle a request
+            var bestProviderMetrics = query
                 .OrderBy(p => p.RequestCount)
                 .ThenBy(p => p.ErrorCount)
+                .ThenByDescending(p => p.ProviderScore) // Higher score is better
                 .ThenBy(p => p.AvgResponseTime)
                 .FirstOrDefault();
 
+
+            Console.WriteLine(_providers.FirstOrDefault(p => p.Name == bestProviderMetrics?.ProviderName).Name);
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true // For pretty-printing the JSON
+            };
+            string metricsJson = JsonSerializer.Serialize(bestProviderMetrics, options);
+            Console.WriteLine(metricsJson);
             return _providers.FirstOrDefault(p => p.Name == bestProviderMetrics?.ProviderName) ?? new Provider();
         }
 
@@ -82,9 +103,9 @@ namespace Location.Services.LocationLogic
                 {
                     await ResetMetricsAsync(providerName);
                 }
-
-                // Update metrics in cache
-               await _cache.StoreToCacheAsync(providerName, metrics, TimeSpan.FromMinutes(5));
+                metrics.ProviderScore += 1; //  everytime a provider returns a result we score it it helps choosing the best provider
+                                            // Update metrics in cache
+                await _cache.StoreToCacheAsync(providerName, metrics, TimeSpan.FromMinutes(5));
             }
         }
 

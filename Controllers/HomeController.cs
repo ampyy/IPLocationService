@@ -26,7 +26,7 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult Privacy()
+    public IActionResult Resume()
     {
         return View();
     }
@@ -38,7 +38,7 @@ public class HomeController : Controller
     /// <returns>The JSON response from the IP location provider.</returns>
     [HttpGet]
     [Route("api/location")]
-    [RateLimitAttribute(10, 100)]
+    [RateLimitAttribute(200, 12000)] //  200 per minute and 12000 per hour
     public async Task<IActionResult> GetLocation(string ipAddress)
     {
         // Check if the IP address is null or whitespace
@@ -46,7 +46,10 @@ public class HomeController : Controller
         {
             return BadRequest("IP address cannot be null or empty.");
         }
-
+        if(!UtilityFunctions.IsValidIpAddress(ipAddress))
+        {
+            return BadRequest("Invalid IP address");
+        }
         try
         {
             Provider provider = await _providerSelectorLogic.GetBestProviderAsync();

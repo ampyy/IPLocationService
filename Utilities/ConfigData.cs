@@ -11,7 +11,7 @@ namespace Location.Utilities
         }
         public static string GetConfigValue(string key)
         {
-            if (string.IsNullOrEmpty(key))
+            if (string.IsNullOrWhiteSpace(key))
             {
                 throw new ArgumentException("Configuration key cannot be null or empty", nameof(key));
             }
