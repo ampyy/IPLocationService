@@ -1,15 +1,24 @@
-using Location.Interfaces.Service.ICache;
+using Location.Interfaces.Services;
 using Location.Services.Cache;
+using Location.Utilities;
+using Location.Services.LocationLogic;
 
 namespace LocationService
 {
     public class Startup
     {
-        public IConfiguration Configuration { get; }
+        public IConfigurationRoot Configuration { get; }
 
-        public Startup(IConfiguration configuration)
+        public Startup(IWebHostEnvironment env)
         {
-            Configuration = configuration;
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+#if RELEASE
+                .AddJsonFile($"appsettings.Release.json", optional : true)
+#endif
+                .AddEnvironmentVariables();
+            Configuration = builder.Build();
         }
 
         public void ConfigureServices(IServiceCollection services)
@@ -28,6 +37,9 @@ namespace LocationService
             });
 
             services.AddSingleton<ICacheService, CacheService>();
+            services.AddSingleton<IProviderSelectorLogic, ProviderSelectorLogic>();
+            services.AddSingleton<IProviderCallerLogic, ProviderCallerLogic>();
+            ConfigData.SetConfigValues(Configuration);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
