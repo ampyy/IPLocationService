@@ -35,26 +35,26 @@ public class HomeController : Controller
     /// <summary>
     /// Retrieves location information based on the provided IP address.
     /// </summary>
-    /// <param name="ipAddress">The IP address to look up.</param>
+    /// <param name="ip">The IP address to look up.</param>
     /// <returns>The JSON response from the IP location provider.</returns>
     [HttpGet]
     [Route("api/location")]
     [RateLimitAttribute(200, 12000)] //  200 per minute and 12000 per hour
-    public async Task<IActionResult> GetLocation(string ipAddress)
+    public async Task<IActionResult> GetLocation(string ip)
     {
         // Check if the IP address is null or whitespace
-        if (string.IsNullOrWhiteSpace(ipAddress))
+        if (string.IsNullOrWhiteSpace(ip))
         {
             return BadRequest("IP address cannot be null or empty.");
         }
-        if(!UtilityFunctions.IsValidIpAddress(ipAddress))
+        if(!UtilityFunctions.IsValidIpAddress(ip))
         {
             return BadRequest("Invalid IP address");
         }
         try
         {
             Provider provider = await _providerSelectorLogic.GetBestProviderAsync();
-            var response = await _providerCallerLogic.CallProviderApiAsync(provider, ipAddress);
+            var response = await _providerCallerLogic.CallProviderApiAsync(provider, ip);
             return Content(response, "application/json");
         }
         catch (Exception ex)
